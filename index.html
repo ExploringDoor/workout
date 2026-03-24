@@ -124,10 +124,10 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
 /* SET TABLE */
 .set-table{width:100%}
-.set-table-head{display:grid;grid-template-columns:32px 80px 1fr 44px;gap:4px;padding:6px 14px 6px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface2)}
+.set-table-head{display:grid;grid-template-columns:44px 1fr 44px;gap:4px;padding:6px 14px 6px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface2)}
 .set-table-head span{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);text-align:center}
 .set-table-head span:first-child{text-align:left}
-.set-row{display:grid;grid-template-columns:32px 80px 1fr 44px;gap:4px;padding:8px 14px;align-items:center;border-bottom:1px solid var(--border);transition:background .15s}
+.set-row{display:grid;grid-template-columns:44px 1fr 44px;gap:4px;padding:8px 14px;align-items:center;border-bottom:1px solid var(--border);transition:background .15s}
 .set-row:last-child{border-bottom:none}
 .set-row.logged{background:rgba(48,209,88,.04)}
 .set-num{font-size:13px;font-weight:700;color:var(--text3)}
@@ -135,9 +135,9 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .set-prev-val{font-size:10px;color:var(--text3);font-weight:500;min-height:13px}
 .set-prev-val.has-prev{color:var(--accent)}
 .set-input-wrap{display:flex;align-items:center;gap:3px;width:100%}
-.set-adj{background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);width:26px;height:32px;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation}
+.set-adj{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);width:28px;height:30px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation}
 .set-adj:active{background:var(--border2)}
-.set-inp{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:15px;font-weight:700;text-align:center;padding:5px 2px;flex:1;min-width:0;outline:none;-webkit-appearance:none;font-family:'Inter',sans-serif}
+.set-inp{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;font-weight:700;text-align:center;padding:4px 2px;flex:1;min-width:0;outline:none;-webkit-appearance:none;font-family:'Inter',sans-serif}
 .set-inp:focus{border-color:var(--accent);background:rgba(79,142,247,.08)}
 .set-inp.filled{color:var(--green);border-color:rgba(48,209,88,.4)}
 .set-check{width:34px;height:34px;border-radius:50%;border:2px solid var(--border2);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;touch-action:manipulation;transition:all .2s}
@@ -524,7 +524,7 @@ function buildExBlock(list,wk,dn,ex,i,pw,dayKey){
   const sub2=ex.sub2&&ex.sub2!='None'?ex.sub2.trim():null;
 
   // Set rows
-  let setRowsHTML='<div class="set-table-head"><span>SET</span><span>PREV</span><span>REPS / WEIGHT</span><span>LOG</span></div>';
+  let setRowsHTML='<div class="set-table-head"><span>SET</span><span>REPS / WEIGHT</span><span>LOG</span></div>';
   for(let s=0;s<sets;s++){
     const wt=ld(stk(wk,dn,i,s,'w'))||'0';
     const rp=ld(stk(wk,dn,i,s,'r'))||'0';
@@ -536,8 +536,7 @@ function buildExBlock(list,wk,dn,ex,i,pw,dayKey){
     }
     const filled=wt!=='0'||rp!=='0';
     setRowsHTML+=`<div class="set-row${done?' logged':''}" id="sr_${i}_${s}">
-      <div class="set-num">${s+1}</div>
-      <div class="set-cell"><div class="set-prev-val${hasPrev?' has-prev':''}">${prevHTML}</div></div>
+      <div class="set-num" style="display:flex;flex-direction:column;align-items:center;gap:2px"><span>${s+1}</span><span class="set-prev-val${hasPrev?' has-prev':''}" style="font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42px;text-align:center">${hasPrev?prevHTML:''}</span></div>
       <div class="set-cell" style="flex-direction:column;gap:6px;align-items:stretch">
         <div style="display:flex;align-items:center;gap:2px">
           <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);width:28px;flex-shrink:0">Reps</span>
@@ -886,15 +885,14 @@ function buildAddExCard(wk,dn){
 
 function buildCustomExBlock(wk,dn,ex){
   const sets=ex.sets||3;
-  let setRowsHTML=`<div class="set-table-head"><span>SET</span><span>PREV</span><span>REPS / WEIGHT</span><span>LOG</span></div>`;
+  let setRowsHTML=`<div class="set-table-head"><span>SET</span><span>REPS / WEIGHT</span><span>LOG</span></div>`;
   for(let s=0;s<sets;s++){
     const wt=ld(stk(wk,dn,'c'+ex.id,s,'w'))||'0';
     const rp=ld(stk(wk,dn,'c'+ex.id,s,'r'))||'0';
     const done=ld(stk(wk,dn,'c'+ex.id,s,'d'))==='1';
     const filled=wt!=='0'||rp!=='0';
     setRowsHTML+=`<div class="set-row${done?' logged':''}" id="sr_c${ex.id}_${s}">
-      <div class="set-num">${s+1}</div>
-      <div class="set-cell"><div class="set-prev-val">—</div></div>
+      <div class="set-num" style="display:flex;flex-direction:column;align-items:center;gap:2px"><span>${s+1}</span></div>
       <div class="set-cell" style="flex-direction:column;gap:6px;align-items:stretch">
         <div style="display:flex;align-items:center;gap:2px">
           <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);width:28px;flex-shrink:0">Reps</span>
@@ -964,29 +962,59 @@ function loadCustomExercises(wk,dn){
 function swapExercise(exIdx,newName,newEmbed){
   const block=document.getElementById('ex'+exIdx);
   if(!block)return;
-  // Update name
+
+  // Get old exercise name + embed before replacing
   const nameEl=block.querySelector('.ex-block-name');
-  if(nameEl){
-    nameEl.textContent=newName;
-    nameEl.dataset.exname=newName;
-  }
-  // Update or hide demo button
+  const oldName=nameEl?nameEl.textContent.trim():'';
   const demoBtn=block.querySelector('.ex-demo-btn');
+  const oldEmbed=demoBtn?demoBtn.dataset.embed:'';
+
+  // Update name to the new exercise
+  if(nameEl){nameEl.textContent=newName;nameEl.dataset.exname=newName;}
+
+  // Update demo button
   if(demoBtn){
     if(newEmbed){demoBtn.dataset.embed=newEmbed;demoBtn.style.display='';}
     else{demoBtn.style.display='none';}
   }
+
+  // Find the subs section and add the old exercise as a new sub row
+  // Also remove the "Use This" button from the swapped-in sub
+  const subsSection=block.querySelector('.subs-section');
+  if(subsSection&&oldName){
+    // Remove the "Use This" button from the sub we just used
+    const usedBtn=subsSection.querySelector(`.sub-swap[data-name="${newName}"]`);
+    if(usedBtn){
+      const row=usedBtn.closest('.sub-item');
+      if(row)row.remove();
+    }
+    // Add old exercise as a new sub row at top of subs list
+    const vl=VL[oldName];
+    const oldEmb=vl?vl.embed||oldEmbed:oldEmbed;
+    const newRow=document.createElement('div');
+    newRow.className='sub-item';
+    newRow.innerHTML=`<span class="sub-name">${oldName}</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${oldEmb?`<button class="sub-demo" data-embed="${oldEmb}" data-name="${oldName}" data-exidx="${exIdx}">▶ Demo</button>`:''}
+        <button class="sub-swap" data-name="${oldName}" data-embed="${oldEmb}" data-exidx="${exIdx}" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.25);border-radius:8px;color:var(--accent);padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Use This</button>
+      </div>`;
+    // Insert at top of subs list
+    const firstSub=subsSection.querySelector('.sub-item');
+    if(firstSub)subsSection.insertBefore(newRow,firstSub);
+    else subsSection.appendChild(newRow);
+  }
+
   // Close any open video
   const vid=block.querySelector('[id^="vid"]');
   if(vid){vid.innerHTML='';vid.classList.remove('open');}
-  // Visual feedback
+
+  // Visual flash
   const nameWrap=block.querySelector('.ex-block-info');
   if(nameWrap){
     nameWrap.style.transition='background .3s';
-    nameWrap.style.background='rgba(79,142,247,.1)';
+    nameWrap.style.background='rgba(79,142,247,.12)';
     setTimeout(()=>{nameWrap.style.background='';},600);
   }
-  // Scroll to show the updated card
   setTimeout(()=>block.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
 }
 
