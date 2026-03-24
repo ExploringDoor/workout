@@ -124,14 +124,14 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
 /* SET TABLE */
 .set-table{width:100%}
-.set-table-head{display:grid;grid-template-columns:36px 1fr 1fr 1fr 44px;gap:4px;padding:6px 14px 6px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface2)}
+.set-table-head{display:grid;grid-template-columns:32px 80px 1fr 44px;gap:4px;padding:6px 14px 6px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface2)}
 .set-table-head span{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);text-align:center}
 .set-table-head span:first-child{text-align:left}
-.set-row{display:grid;grid-template-columns:36px 1fr 1fr 1fr 44px;gap:4px;padding:8px 14px;align-items:center;border-bottom:1px solid var(--border);transition:background .15s}
+.set-row{display:grid;grid-template-columns:32px 80px 1fr 44px;gap:4px;padding:8px 14px;align-items:center;border-bottom:1px solid var(--border);transition:background .15s}
 .set-row:last-child{border-bottom:none}
 .set-row.logged{background:rgba(48,209,88,.04)}
 .set-num{font-size:13px;font-weight:700;color:var(--text3)}
-.set-cell{display:flex;flex-direction:column;align-items:center;gap:3px}
+.set-cell{display:flex;flex-direction:column;align-items:stretch;gap:3px}
 .set-prev-val{font-size:10px;color:var(--text3);font-weight:500;min-height:13px}
 .set-prev-val.has-prev{color:var(--accent)}
 .set-input-wrap{display:flex;align-items:center;gap:3px;width:100%}
@@ -226,6 +226,25 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .stroke-pull{stroke:#bf5af2}
 .stroke-push{stroke:#ff9f0a}
 .stroke-legs{stroke:#ff453a}
+
+/* ADD EXERCISE */
+.add-ex-card{background:var(--surface);border:1px dashed var(--border2);border-radius:18px;margin:0 0 14px;overflow:hidden}
+.add-ex-toggle{width:100%;background:none;border:none;color:var(--accent);font-size:15px;font-weight:700;padding:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Inter',sans-serif}
+.add-ex-toggle:active{opacity:.7}
+.add-ex-form{display:none;padding:0 14px 14px;border-top:1px solid var(--border)}
+.add-ex-form.open{display:block}
+.add-ex-field{margin-top:12px}
+.add-ex-label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.add-ex-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:15px;font-weight:500;padding:11px 12px;outline:none;font-family:'Inter',sans-serif}
+.add-ex-input:focus{border-color:var(--accent);background:rgba(79,142,247,.06)}
+.add-ex-row{display:flex;gap:8px;margin-top:12px}
+.add-ex-num{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:15px;font-weight:600;padding:11px 10px;outline:none;text-align:center;font-family:'Inter',sans-serif;-webkit-appearance:none}
+.add-ex-num:focus{border-color:var(--accent)}
+.add-ex-submit{width:100%;background:var(--accent);color:#000;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-top:14px;font-family:'Inter',sans-serif}
+.add-ex-submit:active{opacity:.85}
+.custom-badge{background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.3);border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;color:var(--accent);margin-left:6px}
+.remove-custom{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:2px 6px;flex-shrink:0;line-height:1}
+.remove-custom:active{color:var(--red)}
 </style>
 </head>
 <body>
@@ -452,6 +471,9 @@ function selDay(wk,dn){
   workoutTimer=setInterval(updateWorkoutMeta,1000);
   updateWorkoutMeta();
   document.getElementById('completeBar').style.display='block';
+  // Add custom exercise card at bottom + load any saved custom exercises
+  buildAddExCard(wk,dn);
+  loadCustomExercises(wk,dn);
   go('k');
 }
 
@@ -478,6 +500,19 @@ function updateWorkoutMeta(){
       }
     }
   });
+  // Also count custom exercises
+  getCustomExercises(cw,cd).forEach(ex=>{
+    const sets=ex.sets||3;
+    total+=sets;
+    for(let s=0;s<sets;s++){
+      if(ld(stk(cw,cd,'c'+ex.id,s,'d'))==='1'){
+        done++;
+        const wt=parseInt(ld(stk(cw,cd,'c'+ex.id,s,'w'))||'0');
+        const rp=parseInt(ld(stk(cw,cd,'c'+ex.id,s,'r'))||'0');
+        vol+=wt*rp;
+      }
+    }
+  });
   document.getElementById('metaSets').textContent=`${done}/${total}`;
   document.getElementById('metaVol').textContent=vol>0?`${vol} lb`:'0 lb';
 }
@@ -489,7 +524,7 @@ function buildExBlock(list,wk,dn,ex,i,pw,dayKey){
   const sub2=ex.sub2&&ex.sub2!='None'?ex.sub2.trim():null;
 
   // Set rows
-  let setRowsHTML='<div class="set-table-head"><span>SET</span><span>PREV</span><span>REPS</span><span>WEIGHT</span><span>LOG</span></div>';
+  let setRowsHTML='<div class="set-table-head"><span>SET</span><span>PREV</span><span>REPS / WEIGHT</span><span>LOG</span></div>';
   for(let s=0;s<sets;s++){
     const wt=ld(stk(wk,dn,i,s,'w'))||'0';
     const rp=ld(stk(wk,dn,i,s,'r'))||'0';
@@ -503,18 +538,22 @@ function buildExBlock(list,wk,dn,ex,i,pw,dayKey){
     setRowsHTML+=`<div class="set-row${done?' logged':''}" id="sr_${i}_${s}">
       <div class="set-num">${s+1}</div>
       <div class="set-cell"><div class="set-prev-val${hasPrev?' has-prev':''}">${prevHTML}</div></div>
-      <div class="set-cell">
-        <div class="set-input-wrap">
-          <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="r" data-d="-1">−</button>
-          <input type="number" inputmode="decimal" class="set-inp${filled?' filled':''}" id="rv_${i}_${s}" value="${rp}" min="0" step="1" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="r">
-          <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="r" data-d="1">+</button>
+      <div class="set-cell" style="flex-direction:column;gap:6px;align-items:stretch">
+        <div style="display:flex;align-items:center;gap:2px">
+          <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);width:28px;flex-shrink:0">Reps</span>
+          <div class="set-input-wrap" style="flex:1">
+            <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="r" data-d="-1">−</button>
+            <input type="number" inputmode="decimal" class="set-inp${filled?' filled':''}" id="rv_${i}_${s}" value="${rp}" min="0" step="1" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="r">
+            <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="r" data-d="1">+</button>
+          </div>
         </div>
-      </div>
-      <div class="set-cell">
-        <div class="set-input-wrap">
-          <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="w" data-d="-5">−</button>
-          <input type="number" inputmode="decimal" class="set-inp${filled?' filled':''}" id="wv_${i}_${s}" value="${wt}" min="0" step="5" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="w">
-          <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="w" data-d="5">+</button>
+        <div style="display:flex;align-items:center;gap:2px">
+          <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);width:28px;flex-shrink:0">Wt</span>
+          <div class="set-input-wrap" style="flex:1">
+            <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="w" data-d="-5">−</button>
+            <input type="number" inputmode="decimal" class="set-inp${filled?' filled':''}" id="wv_${i}_${s}" value="${wt}" min="0" step="5" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="w">
+            <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="${i}" data-s="${s}" data-f="w" data-d="5">+</button>
+          </div>
         </div>
       </div>
       <div style="display:flex;justify-content:center">
@@ -531,7 +570,14 @@ function buildExBlock(list,wk,dn,ex,i,pw,dayKey){
     subsHTML='<div class="subs-section"><div class="subs-label">Substitutions</div>';
     [sub1,sub2].filter(Boolean).forEach(s=>{
       const vl=VL[s];
-      subsHTML+=`<div class="sub-item"><span class="sub-name">${s}</span>${vl?`<button class="sub-demo" data-embed="${vl.embed||''}" data-name="${s}" data-exidx="${i}">▶ Demo</button>`:''}</div>`;
+      const embed=vl?vl.embed||'':'';
+      subsHTML+=`<div class="sub-item">
+        <span class="sub-name">${s}</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${vl?`<button class="sub-demo" data-embed="${embed}" data-name="${s}" data-exidx="${i}">▶ Demo</button>`:''}
+          <button class="sub-swap" data-name="${s}" data-embed="${embed}" data-exidx="${i}" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.25);border-radius:8px;color:var(--accent);padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">Use This</button>
+        </div>
+      </div>`;
     });
     subsHTML+='</div>';
   }
@@ -589,6 +635,9 @@ document.addEventListener('click',e=>{
   // Sub demo
   const sdemo=e.target.closest('.sub-demo');
   if(sdemo){openSubVid(sdemo.dataset.exidx,sdemo.dataset.name,sdemo.dataset.embed);return;}
+  // Sub swap — replace exercise name at top of card
+  const sswap=e.target.closest('.sub-swap');
+  if(sswap){swapExercise(sswap.dataset.exidx,sswap.dataset.name,sswap.dataset.embed);return;}
   // Exercise name -> progress
   const en=e.target.closest('.ex-block-name');
   if(en){openProgress(en.dataset.exname,parseInt(en.dataset.exidx),en.dataset.dayname);return;}
@@ -757,6 +806,189 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
   for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.includes(UID))localStorage.removeItem(k);}
   buildHome();alert('All data cleared!');
 });
+
+// ── CUSTOM EXERCISES ──────────────────────────────────────────────────────────
+function customKey(wk,dn){return `bts3|${UID}|custom|${wk}|${dn}`;}
+
+function getCustomExercises(wk,dn){
+  try{return JSON.parse(ld(customKey(wk,dn))||'[]');}catch(e){return[];}
+}
+
+function saveCustomExercises(wk,dn,arr){
+  sv(customKey(wk,dn),JSON.stringify(arr));
+}
+
+function buildAddExCard(wk,dn){
+  const card=document.createElement('div');
+  card.className='add-ex-card';
+  card.id='addExCard';
+  card.innerHTML=`
+    <button class="add-ex-toggle" id="addExToggle">
+      <span style="font-size:20px;line-height:1">＋</span> Add Your Own Exercise
+    </button>
+    <div class="add-ex-form" id="addExForm">
+      <div class="add-ex-field">
+        <div class="add-ex-label">Exercise Name</div>
+        <input class="add-ex-input" id="customName" type="text" placeholder="e.g. Cable Fly, Face Pull..." autocomplete="off">
+      </div>
+      <div class="add-ex-field">
+        <div class="add-ex-label">Sets &amp; Reps Target</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:600">Sets</div>
+            <input class="add-ex-num" id="customSets" type="number" inputmode="numeric" value="3" min="1" max="10">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:600">Reps</div>
+            <input class="add-ex-num" id="customReps" type="text" inputmode="decimal" placeholder="8-12">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:600">Rest</div>
+            <input class="add-ex-num" id="customRest" type="text" placeholder="2 min">
+          </div>
+        </div>
+      </div>
+      <button class="add-ex-submit" id="addExSubmit">Add Exercise</button>
+    </div>`;
+  document.getElementById('wkl').appendChild(card);
+
+  document.getElementById('addExToggle').addEventListener('click',()=>{
+    const form=document.getElementById('addExForm');
+    const open=form.classList.toggle('open');
+    document.getElementById('addExToggle').querySelector('span').textContent=open?'✕':'＋';
+    if(open)setTimeout(()=>document.getElementById('customName').focus(),100);
+  });
+
+  document.getElementById('addExSubmit').addEventListener('click',()=>{
+    const name=document.getElementById('customName').value.trim();
+    if(!name){document.getElementById('customName').focus();return;}
+    const sets=Math.max(1,parseInt(document.getElementById('customSets').value)||3);
+    const reps=document.getElementById('customReps').value.trim()||'—';
+    const rest=document.getElementById('customRest').value.trim()||'—';
+    const arr=getCustomExercises(wk,dn);
+    const newEx={name,sets,reps,rest,id:Date.now()};
+    arr.push(newEx);
+    saveCustomExercises(wk,dn,arr);
+    // Clear form
+    document.getElementById('customName').value='';
+    document.getElementById('customReps').value='';
+    document.getElementById('customRest').value='';
+    document.getElementById('addExForm').classList.remove('open');
+    document.getElementById('addExToggle').querySelector('span').textContent='＋';
+    // Render the new card before the add card
+    const addCard=document.getElementById('addExCard');
+    const exBlock=buildCustomExBlock(wk,dn,newEx);
+    document.getElementById('wkl').insertBefore(exBlock,addCard);
+    setTimeout(()=>exBlock.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+    updateWorkoutMeta();
+  });
+}
+
+function buildCustomExBlock(wk,dn,ex){
+  const sets=ex.sets||3;
+  let setRowsHTML=`<div class="set-table-head"><span>SET</span><span>PREV</span><span>REPS / WEIGHT</span><span>LOG</span></div>`;
+  for(let s=0;s<sets;s++){
+    const wt=ld(stk(wk,dn,'c'+ex.id,s,'w'))||'0';
+    const rp=ld(stk(wk,dn,'c'+ex.id,s,'r'))||'0';
+    const done=ld(stk(wk,dn,'c'+ex.id,s,'d'))==='1';
+    const filled=wt!=='0'||rp!=='0';
+    setRowsHTML+=`<div class="set-row${done?' logged':''}" id="sr_c${ex.id}_${s}">
+      <div class="set-num">${s+1}</div>
+      <div class="set-cell"><div class="set-prev-val">—</div></div>
+      <div class="set-cell" style="flex-direction:column;gap:6px;align-items:stretch">
+        <div style="display:flex;align-items:center;gap:2px">
+          <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);width:28px;flex-shrink:0">Reps</span>
+          <div class="set-input-wrap" style="flex:1">
+            <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="c${ex.id}" data-s="${s}" data-f="r" data-d="-1">−</button>
+            <input type="number" inputmode="decimal" class="set-inp${filled?' filled':''}" id="rv_c${ex.id}_${s}" value="${rp}" min="0" step="1" data-wk="${wk}" data-dn="${dn}" data-i="c${ex.id}" data-s="${s}" data-f="r">
+            <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="c${ex.id}" data-s="${s}" data-f="r" data-d="1">+</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:2px">
+          <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);width:28px;flex-shrink:0">Wt</span>
+          <div class="set-input-wrap" style="flex:1">
+            <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="c${ex.id}" data-s="${s}" data-f="w" data-d="-5">−</button>
+            <input type="number" inputmode="decimal" class="set-inp${filled?' filled':''}" id="wv_c${ex.id}_${s}" value="${wt}" min="0" step="5" data-wk="${wk}" data-dn="${dn}" data-i="c${ex.id}" data-s="${s}" data-f="w">
+            <button class="set-adj" data-wk="${wk}" data-dn="${dn}" data-i="c${ex.id}" data-s="${s}" data-f="w" data-d="5">+</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center">
+        <div class="set-check${done?' done':''}" data-wk="${wk}" data-dn="${dn}" data-i="c${ex.id}" data-s="${s}" id="dc_c${ex.id}_${s}">
+          <svg class="set-check-icon" viewBox="0 0 14 14"><polyline points="2,7 5.5,10.5 12,3.5"/></svg>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const block=document.createElement('div');
+  block.className='ex-block';block.id=`exC${ex.id}`;
+  block.dataset.customId=ex.id;
+  block.innerHTML=`
+    <div class="ex-block-header">
+      <div class="ex-num-badge" style="background:rgba(79,142,247,.15);color:var(--accent)">+</div>
+      <div class="ex-block-info" style="flex:1">
+        <div class="ex-block-name" style="cursor:default">${ex.name}<span class="custom-badge">Custom</span></div>
+        <div class="ex-block-meta">
+          <span class="ex-tag">${sets} sets</span>
+          ${ex.reps!=='—'?`<span class="ex-tag reps">${ex.reps}</span>`:''}
+          ${ex.rest!=='—'?`<span class="ex-tag rest-tag">⏱ ${ex.rest}</span>`:''}
+        </div>
+      </div>
+      <button class="remove-custom" data-custom-id="${ex.id}" title="Remove">✕</button>
+    </div>
+    <div class="set-table">${setRowsHTML}</div>`;
+  
+  // Remove button
+  block.querySelector('.remove-custom').addEventListener('click',()=>{
+    if(!confirm('Remove this exercise?'))return;
+    const arr=getCustomExercises(wk,dn).filter(e=>e.id!==ex.id);
+    saveCustomExercises(wk,dn,arr);
+    block.remove();
+    updateWorkoutMeta();
+  });
+
+  return block;
+}
+
+function loadCustomExercises(wk,dn){
+  const arr=getCustomExercises(wk,dn);
+  const addCard=document.getElementById('addExCard');
+  arr.forEach(ex=>{
+    const block=buildCustomExBlock(wk,dn,ex);
+    document.getElementById('wkl').insertBefore(block,addCard);
+  });
+}
+
+// ── SWAP EXERCISE ─────────────────────────────────────────────────────────────
+function swapExercise(exIdx,newName,newEmbed){
+  const block=document.getElementById('ex'+exIdx);
+  if(!block)return;
+  // Update name
+  const nameEl=block.querySelector('.ex-block-name');
+  if(nameEl){
+    nameEl.textContent=newName;
+    nameEl.dataset.exname=newName;
+  }
+  // Update or hide demo button
+  const demoBtn=block.querySelector('.ex-demo-btn');
+  if(demoBtn){
+    if(newEmbed){demoBtn.dataset.embed=newEmbed;demoBtn.style.display='';}
+    else{demoBtn.style.display='none';}
+  }
+  // Close any open video
+  const vid=block.querySelector('[id^="vid"]');
+  if(vid){vid.innerHTML='';vid.classList.remove('open');}
+  // Visual feedback
+  const nameWrap=block.querySelector('.ex-block-info');
+  if(nameWrap){
+    nameWrap.style.transition='background .3s';
+    nameWrap.style.background='rgba(79,142,247,.1)';
+    setTimeout(()=>{nameWrap.style.background='';},600);
+  }
+  // Scroll to show the updated card
+  setTimeout(()=>block.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 buildHome();
